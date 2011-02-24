@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+<head>
+<title>cRPG Calculator Pack</title>
+
+<link rel="stylesheet" type="text/css" href="style.css" />
+
+<!-- 3rd party stuff -->
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript" src="script/jquery.flot.js"></script>
+
+<!-- Own stuff -->
+<script type="text/javascript" src="script/utils.js"></script>
+<script type="text/javascript" src="script/inputcontrol.js"></script>
+
+<!-- Calculators -->
+<script type="text/javascript" src="script/crpg_functions.js"></script>
+<!--<script type="text/javascript" src="script/crpg_weaponprofcalculator.js"></script>-->
+<script type="text/javascript" src="script/crpg_characterplanner.js"></script>
+<script type="text/javascript" src="script/crpg_damagecalculator.js"></script>
+<script type="text/javascript" src="script/crpg_xpdisplay.js"></script>
+
+
+<script type="text/javascript" language="javascript">
+
+$(document).ready(function() {
+
+	//$("#wpfCalc").crpg_weaponprofcalculator();
+	
+	$("#charCalc").crpg_characterplanner();
+	
+	$("#dmgCalc").crpg_damagecalculator();
+	
+	$("#xpDisplay").crpg_xpdisplay();
+
+	
+	// Hide / show individual apps by clicking the title
+	$("div.application h2").each( function() {
+	
+		$(this).click(function() {
+			$(this).siblings().each(function() {
+				if ($(this).is(":hidden")) {
+					$(this).slideDown();
+				} else {
+					$(this).slideUp();
+				}
+			});
+		});
+	}).siblings().hide();
+	
+	$("input.controllable").inputcontrol();
+	
+});
+</script>
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-18979833-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+</head>
+
+<body>
+
+<!--<div id="wpfCalc" class="application"></div>-->
+
+<div id="charCalc" class="application"></div>
+
+<div id="dmgCalc" class="application"></div>
+
+<div id="xpDisplay" class="application"></div>
+
+</body>
+
+</html>
