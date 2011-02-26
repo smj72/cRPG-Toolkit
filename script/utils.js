@@ -11,6 +11,19 @@ function getUrlVars() {
     return vars;
 }
 
+// Returns url variables in a hashtable
+function parseGetVars(param) {
+    var vars = [], hash;
+    var hashes = param.split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+
 // Adds chunking method to strings. Splits string into
 // an array containing substrings of n chars each
 String.prototype.chunk = function(n) {

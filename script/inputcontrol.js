@@ -86,6 +86,7 @@
 								$this.val( parseInt($this.val()) + increment);
 								$this.trigger("change");
 							}
+							return false;
 						})
 				)
 				.append(
@@ -97,6 +98,7 @@
 								$this.val( parseInt($this.val()) - increment);
 								$this.trigger("change");
 							}
+							return false;
 						})
 				);
 					

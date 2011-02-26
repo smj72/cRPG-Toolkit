@@ -4,7 +4,14 @@
 	
 		return this.each( function() {
 			if (this.tagName == "DIV") {
-				var $this = $(this);				
+				
+				var $this = $(this);
+				var mainform = $("<form />").attr({
+					"id": "crpg_characterplanner_mainform"
+				});
+				var charControls = $("<div />")
+				.attr("id", "character_controls")
+				.addClass("controlUnit");
 				
 				$this
 				.append(
@@ -22,7 +29,135 @@
 				.append(
 					$("<p />")
 						.text("For cRPG version 0.210")
+				)
+				.append(
+					charControls
 				);
+				
+				var saveCharacter = function() {
+					var newCharName = inputs["CharName"].val();
+					var newCookie = "";
+					
+					// First add chars with not current name to cookie
+					var chars = $.cookie("crpg_characterplanner_character");
+					if(chars) {
+						chars = chars.split(";");
+						for(var i = 0; i < chars.length; i++) {
+							var vars = parseGetVars(chars[i]);
+							var currName = vars["input_charname"];
+							if( currName != newCharName ) {
+								if(newCookie != "")
+									newCookie += ";";
+									
+								newCookie += chars[i];
+							}
+						}
+					}					
+					// Then add new char					
+					if(newCookie != "")
+						newCookie += ";";
+						
+					newCookie += mainform.serialize();
+					$.cookie("crpg_characterplanner_character", newCookie, {
+						expires: 365 // Maintain for a year
+					});
+					generateCharacterControls();
+				}
+				
+				var loadCharacter = function() {
+					var nameToLoad = $("#charplanner_charselect").find(":selected").text();
+					
+					var chars = $.cookie("crpg_characterplanner_character");
+					chars = chars.split(";");
+					for(var i = 0; i < chars.length; i++) {
+						var vars = parseGetVars(chars[i]);
+						if(vars["input_charname"] == nameToLoad) {
+							mainform.unserializeForm(chars[i]);
+						}
+					}
+					inputChanged();
+				}
+				
+				var deleteCharacter = function() {
+					var oldCookie = $.cookie("crpg_characterplanner_character");
+					var newCookie = "";
+					
+					var nameToDelete = $("#charplanner_charselect").find(":selected").text();
+					
+					if( !confirm("Are you sure you want to delete '" + nameToDelete + "'?") )
+						return;
+						
+					var chars = $.cookie("crpg_characterplanner_character");
+					chars = chars.split(";");
+					for(var i = 0; i < chars.length; i++) {
+						var vars = parseGetVars(chars[i]);
+						if(!(vars["input_charname"] == nameToDelete)) {
+							if(newCookie == "")
+								newCookie = chars[i];
+							else {
+								newCookie += ";" + chars[i];
+							}
+						}
+					}
+					$.cookie("crpg_characterplanner_character", newCookie);
+					
+					generateCharacterControls();
+				}
+				
+				var generateCharSelect = function() {
+					var select = $("<select />").attr("id", "charplanner_charselect");
+					
+					var chars = $.cookie("crpg_characterplanner_character");
+					chars = chars.split(";");
+					for(var i = 0; i < chars.length; i++) {
+						var vars = parseGetVars(chars[i]);
+						
+						select.append(
+							$("<option />")
+							.attr({
+								"value": vars["input_charname"],
+							})
+							.text(vars["input_charname"])
+							
+						);
+					}
+					
+					return select;
+				}
+				
+				var generateCharacterControls = function() {
+					charControls.children().remove();
+					charControls.append(
+						$("<strong />")
+							.text("Saved characters")
+							.css({
+								"display": "block"
+							})
+					);
+				
+					var chars = $.cookie("crpg_characterplanner_character");
+					if(chars) {
+						chars = chars.split(";");
+						var charSelect = generateCharSelect();
+					
+						if(chars.length > 0) {
+							charControls
+							.append(
+								charSelect
+							)
+							.append(
+								$("<button />").text("Load selected").bind("click", loadCharacter)
+							)
+							.append(
+								$("<button />").text("Delete selected").bind("click", deleteCharacter)
+							);
+						}						
+					}
+					charControls
+						.append(
+							$("<button />").text("Save current").bind("click", saveCharacter)
+						);
+				}
 				
 				// Validates all inputs and then calls for output
 				var inputChanged = function() {
@@ -84,7 +219,7 @@
 					
 					// Then validate skill-attribute dependencies
 					var skillDependencies = [
-						["Converted", parseInt(availableSkillOutput.text())],
+						["Converted", getAvailableSkillpoints( parseInt(inputs["Level"].val()) )],
 						["Ironflesh", Math.floor(inputs["Strength"].val() / 3)],
 						["Power Strike", Math.floor(inputs["Strength"].val() / 3)],
 						["Shield", Math.floor(inputs["Agility"].val() / 3)],
@@ -230,7 +365,11 @@
 				
 				var inputContainer = $("<div />")
 					.addClass("input");
-				$this.append(inputContainer);
+				$this.append(
+					mainform.append(
+						inputContainer
+					)
+				);
 				
 				var inputs = [], hash;
 				
@@ -240,7 +379,30 @@
 					.append(
 						$("<h4 />").text("General")
 					);
-				var input = $("<input />")
+					
+				var input = $("<input />").attr({
+					"name": "input_charname",
+					"type": "text",				
+					"size": "20",
+					"value": "Default"
+					}).css({
+						"width": "6em",
+						"float": "right"
+					});
+				inputs[ "CharName" ] = input;
+				var label = $("<label />")
+					.text("Character name");
+					
+				var wrap = $("<div />")
+					.addClass("inputWrap");
+					
+				wrap.append(label)
+					.append(input);
+					
+				generalWrap.append(wrap);
+					
+					
+				input = $("<input />")
 					.addClass("controllable controllable_increment_1")
 					.attr("name", "input_level")
 					.attr("type", "text")
@@ -250,10 +412,10 @@
 				// Put field to the map
 				inputs[ "Level" ] = input;
 				
-				var label = $("<label />")
+				label = $("<label />")
 					.text( "Level" );
 				
-				var wrap = $("<div />")
+				wrap = $("<div />")
 					.addClass("inputWrap");
 					
 				wrap.append(label)
@@ -459,6 +621,7 @@
 							// Find the input under buttons parent and update value
 							thisInput.val(newWpfValue);
 							inputChanged();
+							return false;
 						});
 					
 					var wrap = $("<div />")
@@ -476,6 +639,9 @@
 				var outputWrap = $("<div />")
 					.addClass("output");
 				$this.append(outputWrap);
+				
+				// Save / load controls
+				generateCharacterControls();
 				
 				// Trigger output generation
 				inputChanged();
