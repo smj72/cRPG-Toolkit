@@ -1,10 +1,4 @@
-﻿
-/* Return the amount of xp required for given level */
-/* Outdated with patch 0.200
-function getXPForLevel(level) {
-	//XP to level formula: next_level = round((current_level * 2700) * (1.15 ^ current_level))
-	return Math.round( (level - 1) * 2700 * Math.pow(1.15, level - 1));
-} */
+﻿/* Return the amount of xp required for given level */
 function getXPForLevel(targetLevel) {
 	targetLevel = targetLevel - 1;
 	if (targetLevel < 1)
@@ -23,21 +17,6 @@ function getXPForLevel(targetLevel) {
 }
 
 /* Return the level achievable with given amount of xp */
-/* Outdated with patch 0.200
-function getLevelForXp(xp) {
-	var level = 1;
-	
-	while(getXPForLevel(level) < xp) {
-		level++;
-		
-		if (getXPForLevel(level) > xp) {
-			level--;
-			break;
-		}
-	}
-	
-	return level;
-}*/
 function getLevelForXp(xp) {
 	var level = 1;
 	
@@ -96,10 +75,6 @@ function getWPPCost(targetWPF) {
 }
 
 /* Returns cost for next WPF point based on current */
-/* Outdated pre-patch 0.200 function
-function getNextWPFCost(nextWpf) {
-	return Math.floor(0.006 * Math.pow(nextWpf, 1.35) + 1);
-}*/
 function getNextWPFCost(wpf) {
 	var cost = 0;
 	

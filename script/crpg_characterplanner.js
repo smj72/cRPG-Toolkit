@@ -28,7 +28,7 @@
 				)
 				.append(
 					$("<p />")
-						.text("For cRPG version 0.210")
+						.text("For cRPG version 0.232")
 				)
 				.append(
 					charControls
@@ -194,6 +194,24 @@
 							input.val(value);
 						}
 					}
+					
+					// Validate conversion inputs
+					for (i = 0; i < conversionInputs.length; i++) {
+						var inputName = conversionInputs[i];
+						var input = inputs[inputName];
+						var value = 1;
+						try {						
+							value = parseInt(input.val());							
+							
+							if (value < 0 || value > 100 || isNaN(value)) {
+								throw ("Invalid value");
+							}
+							
+						} catch(exc) {
+							value = 0;
+							input.val(value);
+						}
+					}
 				
 					// Validate skill inputs, first remove basic errors				
 					for (i = 0; i < skillInputs.length; i++) {
@@ -213,13 +231,17 @@
 						}
 					}
 					
-					// Skill points need to be converted 2 at a time
-					if ( parseInt(inputs["Converted"].val()) % 2 != 0)
-						inputs["Converted"].val( parseInt(inputs["Converted"].val()) - 1);
+					// Skill & attr points need to be converted 2 at a time
+					if ( parseInt(inputs["Skills to attributes"].val()) % 2 != 0)
+						inputs["Skills to attributes"].val( parseInt(inputs["Skills to attributes"].val()) - 1);
+						
+					/*if ( parseInt(inputs["Attributes to skills"].val()) % 2 != 0)
+						inputs["Attributes to skills"].val( parseInt(inputs["Attributes to skills"].val()) - 1);*/
 					
 					// Then validate skill-attribute dependencies
 					var skillDependencies = [
-						["Converted", getAvailableSkillpoints( parseInt(inputs["Level"].val()) )],
+						["Attributes to skills", 6 - 1 + parseInt(inputs["Level"].val())],
+						["Skills to attributes", getAvailableSkillpoints( parseInt(inputs["Level"].val()) )],
 						["Ironflesh", Math.floor(inputs["Strength"].val() / 3)],
 						["Power Strike", Math.floor(inputs["Strength"].val() / 3)],
 						["Shield", Math.floor(inputs["Agility"].val() / 3)],
@@ -267,7 +289,7 @@
 					// Attribute totals
 					
 					// 1 per level, 6 to start with, increase starts at level 2
-					var availableAttribute = 6 - 1 + parseInt(inputs["Level"].val()) + Math.floor( parseInt(inputs["Converted"].val()) / 2);
+					var availableAttribute = 6 - 1 + parseInt(inputs["Level"].val()) + Math.floor( parseInt(inputs["Skills to attributes"].val()) / 2) - parseInt(inputs["Attributes to skills"].val());
 					availableAttributeOutput.text(availableAttribute);
 					
 					var usedAttribute = 0;
@@ -279,7 +301,7 @@
 						usedAttributeOutput.addClass("error");
 				
 					// Skill totals
-					var availableSkill = getAvailableSkillpoints( parseInt(inputs["Level"].val()) );
+					var availableSkill = getAvailableSkillpoints( parseInt(inputs["Level"].val()) ) + parseInt(inputs["Attributes to skills"].val())*2 - parseInt(inputs["Skills to attributes"].val());
 					availableSkillOutput.text(availableSkill);
 					
 					var usedSkill = 0;
@@ -294,7 +316,7 @@
 					var availableWpp = getAvailableWPP( parseInt(inputs["Level"].val()), parseInt(inputs["Weapon Master"].val()) );
 					availableWppOutput.text(availableWpp);
 					
-					var usedWpp = 0;
+					var usedWpp = -6;
 					for(var i = 0; i < wpfInputs.length; i++) {
 						usedWpp += getWPPCost( parseInt(inputs[wpfInputs[i]].val()) );
 					}
@@ -341,6 +363,16 @@
 					}
 					if (freePointsList.children().length > 0)
 						outputWrap.append(freePointsList);
+						
+					
+					var convertsList = $("<ul />");					
+					for (var i = 0; i < conversionInputs.length; i++) {
+						if (parseInt(inputs[conversionInputs[i]].val()) > 0)
+						convertsList.append(
+							$("<li />").text( conversionInputs[i] + ": " + inputs[conversionInputs[i]].val() )
+						);
+					}
+					outputWrap.append(convertsList);
 					
 					
 					var skillsList = $("<ul />");					
@@ -453,10 +485,9 @@
 				);
 				
 				inputContainer.append(generalWrap);
+
 				
-					
-				
-				// Attributes
+				//Attributes
 				var availableAttributeOutput = $("<span />");
 				var usedAttributeOutput = $("<span />");
 				var attributeTotals = $("<div />")
@@ -502,6 +533,47 @@
 				}
 				inputContainer.append(attributesWrap);
 				
+				
+				
+				// Conversions				
+				var conversionsWrap = $("<div />")
+					.addClass("inputGroup")
+					.append(
+						$("<h4 />").text("Conversions")
+					);					
+				var conversionInputs = ["Attributes to skills", "Skills to attributes"];
+				for (var i = 0; i < conversionInputs.length; i++) {
+					var input = $("<input />")
+						.addClass("controllable controllable_increment_1")
+						.attr("name", "input_" + conversionInputs[i].toLowerCase().replace(/\s/ig, ""))
+						.attr("type", "text")
+						.attr("value", "0")
+						.bind("change", inputChanged);
+						
+						
+					if(conversionInputs[i] == "Skills to attributes"){
+						input.removeClass("controllable_increment_1")
+						.addClass("controllable controllable_increment_2");
+					}
+					
+					// Put field to the map
+					inputs[ conversionInputs[i] ] = input;
+					
+					var label = $("<label />")
+						.text( conversionInputs[i] );
+					
+					var wrap = $("<div />")
+						.addClass("inputWrap");
+						
+					wrap.append(label)
+						.append(input);
+						
+					conversionsWrap.append(wrap);
+				}
+				inputContainer.append(conversionsWrap);
+				
+				
+				
 				// Skills
 				var availableSkillOutput = $("<span />");
 				var usedSkillOutput = $("<span />");
@@ -524,7 +596,7 @@
 						skillTotals
 					)
 					
-				var skillInputs = ["Converted", "Ironflesh", "Power Strike", "Shield", "Athletics",
+				var skillInputs = ["Ironflesh", "Power Strike", "Shield", "Athletics",
 					"Riding", "Horse Archery", "Power Draw", "Power Throw", "Weapon Master"];
 				for (var i = 0; i < skillInputs.length; i++) {
 					var input = $("<input />")
@@ -536,12 +608,6 @@
 					
 					// Put field to the map
 					inputs[ skillInputs[i] ] = input;
-					
-					// Replace increment for Converted points with 2
-					if (skillInputs[i] == "Converted") {
-						input.removeClass("controllable_increment_1")
-							.addClass("controllable_increment_2");						
-					}
 					
 					var label = $("<label />")
 						.text( skillInputs[i] );
