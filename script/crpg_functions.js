@@ -420,7 +420,7 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	}
 	
 	// Potential maximum damage swing can inflict
-	var potential_damage = penalty_mod * ( dmg * hamod * ( 1 + ps * ps_bonus ) * ( basewpfbonus + wpf / 100.0 * wpf_bonus ) + str / 5 );
+	var potential_damage = penalty_mod * ( dmg * hamod * ( 1 + ps * ps_bonus ) * ( basewpfbonus + wpf / 100.0 * wpf_bonus ) + strengthbonus );
 	
 
 	// Armor soak and reduction factors based on damage type
