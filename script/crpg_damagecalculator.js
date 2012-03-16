@@ -9,7 +9,7 @@
 				$this
 				.append(
 					$("<h2 />")
-						.text("Melee Weapon Damage Calculator")
+						.text("Weapon Damage Calculator")
 				)
 				.append(
 					$("<p />")
@@ -62,6 +62,7 @@
 						var damage = getWeaponDamage(
 							inputs["Strength"].val(),						
 							inputs["Power Strike"].val(),
+							inputs["Horse Archery"].val(),
 							inputs["WPF"].val(),
 							inputs["Weapon damage"].val(),
 							inputs["Damage type"].val(),
@@ -92,10 +93,70 @@
 							$("<li />")
 								.text("Maximum: " + damage[1])
 						);
+
+
 					} catch(exc){
 						output = $("<p />").text(exc);
 					}
 					outputWrap.append(output)
+
+
+
+
+					var output2;					
+					try {
+
+						var eweight = Math.round(getEffectiveWeight(inputs["helmet"].val(), inputs["bodyarmor"].val(), inputs["handarmor"].val(), inputs["boots"].val()) * 10) / 10;
+						var ewpf = getEffectiveWPF(
+							inputs["WPF"].val(),					
+							inputs["Power Strike"].val(),
+							eweight,
+							inputs["Weapon type"].val()
+						);
+
+						var weight =  Math.round((parseFloat(inputs["helmet"].val()) + parseFloat(inputs["bodyarmor"].val()) + parseFloat(inputs["handarmor"].val()) + parseFloat(inputs["boots"].val())) * 10) / 10;
+						var powerpenalty = -getPowerPenalty(parseInt(inputs["Power Strike"].val()), inputs["Weapon type"].val());
+
+						var weightpenalty = (1 - getWeightMulti(eweight)) * (parseInt(inputs["WPF"].val()) - powerpenalty);
+						weightpenalty = Math.round(weightpenalty);
+						ewpf = Math.round(ewpf);
+
+						outputWrap.append(
+							$("<h3 />").text("Effective wpf")
+						);
+						
+						output2 = $("<ul />")
+						.css({
+							"font-size": "110%",
+							"margin": "3em 0 5em 0"
+						})
+						.append(
+							$("<li />")
+								.text("Armor Weight: " + weight)
+						)
+						.append(
+							$("<li />")
+								.text("Effective Armor Weight: " + eweight)
+						)
+						.append(
+							$("<li />")
+								.text("Effective WPF: " + ewpf)
+						)
+						.append(
+							$("<li />")
+								.text("WPF penalty from weight: " + weightpenalty)
+						)
+						.append(
+							$("<li />")
+								.text("WPF penalty from PT/PD: " + powerpenalty)
+						)
+
+
+					} catch(exc){
+						output2 = $("<p />").text(exc);
+					}
+					outputWrap.append(output2)
+
 					
 					/* Graphic for damage for each damage type and armor */
 					outputWrap.append(
@@ -126,6 +187,7 @@
 							var damage = getWeaponDamage(
 								inputs["Strength"].val(),						
 								inputs["Power Strike"].val(),
+								inputs["Horse Archery"].val(),
 								inputs["WPF"].val(),
 								inputs["Weapon damage"].val(),
 								damages[i][0],
@@ -179,7 +241,7 @@
 					.append(
 						$("<h4 />").text("Character")
 					);					
-				var charInputs = ["Strength", "Power Strike", "WPF"];
+				var charInputs = ["Strength", "Power Strike", "Horse Archery", "WPF"];
 				for (var i = 0; i < charInputs.length; i++) {
 					var input = $("<input />")
 						.addClass("controllable controllable_increment_1")
@@ -201,6 +263,7 @@
 						.append(input);
 						
 					charWrap.append(wrap);
+
 				}
 				
 				
@@ -259,7 +322,7 @@
 				// Weapon type select
 				var weaponTypeSelect = $("<select />")
 					.bind("change", inputChanged);
-				var weaponTypes = ["1H", "1/2H", "2H", "Polearm (1h)", "Polearm (2h)"];
+				var weaponTypes = ["1H", "1/2H", "2H", "Polearm (1h)", "Polearm (2h)", "Crossbow", "Bow", "Throwing"];
 				for (var i = 0; i < weaponTypes.length; i++) {
 					weaponTypeSelect.append(
 						$("<option />")
@@ -317,6 +380,104 @@
 				
 				inputs["Shield"] = shieldCheckbox;
 				
+
+				// Armor weight stuff
+
+				var helmet = $("<input />")
+					.addClass("controllable controllable_increment_1")
+					.attr({
+					"type": "text",
+					"size": "3",
+					"value": "0",
+					"name": "input_helmet"
+					})
+					.bind("change", inputChanged);
+
+				inputs["helmet"] = helmet;
+				wrap.append(
+					$("<div />")
+						.addClass("inputWrap")
+						.append(
+							$("<label />").text("Helmet weight")
+						)
+						.append(
+							helmet
+						)	
+				);
+
+
+				var bodyarmor = $("<input />")
+					.addClass("controllable controllable_increment_1")
+					.attr({
+					"type": "text",
+					"size": "3",
+					"value": "0",
+					"name": "input_bodyarmor"
+					})
+					.bind("change", inputChanged);
+
+				inputs["bodyarmor"] = bodyarmor;
+				wrap.append(
+					$("<div />")
+						.addClass("inputWrap")
+						.append(
+							$("<label />").text("Body armor weight")
+						)
+						.append(
+							bodyarmor
+						)	
+				);
+
+
+
+				var handarmor = $("<input />")
+					.addClass("controllable controllable_increment_1")
+					.attr({
+					"type": "text",
+					"size": "3",
+					"value": "0",
+					"name": "input_handarmor"
+					})
+					.bind("change", inputChanged);
+
+				inputs["handarmor"] = handarmor;
+				wrap.append(
+					$("<div />")
+						.addClass("inputWrap")
+						.append(
+							$("<label />").text("Hand armor weight")
+						)
+						.append(
+							handarmor
+						)	
+				);
+
+
+				var boots = $("<input />")
+					.addClass("controllable controllable_increment_1")
+					.attr({
+					"type": "text",
+					"size": "3",
+					"value": "0",
+					"name": "input_boots"
+					})
+					.bind("change", inputChanged);
+
+				inputs["boots"] = boots;
+				wrap.append(
+					$("<div />")
+						.addClass("inputWrap")
+						.append(
+							$("<label />").text("Boot weight")
+						)
+						.append(
+							boots
+						)	
+				);
+				
+
+				// End.
+
 				wrap.append(
 					$("<div />")
 						.addClass("inputWrap")
@@ -328,6 +489,7 @@
 						)
 				);
 				inputContainer.append(wrap);
+
 				
 				
 				// Target options

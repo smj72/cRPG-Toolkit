@@ -163,6 +163,7 @@ function getEncumberance(head_armor, body_armor, leg_armor, hand_armor) {
 	return encumberance;
 }
 
+
 /* Returns effective archery wpf, pd and melee wpf for given encumberance in three-object array */
 function getEffectiveWpfs(pd, archery_wpf, melee_wpf, encumberance) {
 	pd = parseInt(pd);
@@ -200,14 +201,89 @@ function getEffectiveWpfs(pd, archery_wpf, melee_wpf, encumberance) {
 	return [encumbered_archery_wpf, effective_pd, encumbered_melee_wpf];
 }
 
-function getWeaponDamage(str, ps, wpf, dmg, dmgType, weaponCat, mounted, shield, arm) {
+function getArmorReducedDamage(basedamage, armor, soak, reduction, soakrandom, damagerandom)
+{
+	basedamage = parseInt(basedamage);
+	armor = parseInt(armor);
+	soak = parseFloat(soak);
+	reduction = parseFloat(reduction);
+	soakrandom = parseFloat(soakrandom);
+	damagerandom = parseFloat(damagerandom);
+
+
+	var randomized_soak = (soakrandom * 0.55 + 0.45) * soak;
+	var randomized_damage = (damagerandom * 0.1 + 0.9) * basedamage;
+	var soaked_damage = Math.max(randomized_damage - randomized_soak, 0);
+
+	var randomized_reduction = Math.exp((soakrandom * 0.55 + 0.45) * reduction * 0.014);
+	var reduced_damage = (1 - 1 / randomized_reduction) * soaked_damage;
+	var damage_difference = Math.round(reduced_damage + randomized_soak);
+	return randomized_damage - damage_difference;
+	
+}
+
+/* Gets effective wpf properly! */
+function getEffectiveWeight(helmet, chest, hand, feet) {
+	helmet = parseFloat(helmet);
+	chest = parseFloat(chest);
+	hand = parseFloat(hand);
+	feet = parseFloat(feet);
+
+	var eweight = Math.max(0, 3*helmet + chest + feet + 2*hand - 7);
+	return eweight;
+}
+
+function getWeightMulti(effectiveWeight)
+{
+	effectiveWeight = parseFloat(effectiveWeight);
+	return (1 - 0.01 * (effectiveWeight));
+}
+
+function getPowerPenalty(ps, weaponType)
+{
+	var penalty = 0;
+
+	if(weaponType == "Bow")
+		penalty = - (ps * 14);
+	if(weaponType == "Throwing")
+		penalty = - (ps * 13);
+	return penalty;
+}
+
+/* Gets effective wpf properly! */
+function getEffectiveWPF(wpf, ps, effectiveWeight, weaponType) {
+
+	wpf = parseInt(wpf);
+	effectiveWeight = parseFloat(effectiveWeight);					
+	ps = parseInt(ps);
+
+
+
+	var nerfed_wpf = wpf + getPowerPenalty(ps, weaponType);
+
+
+	var weightMulti = getWeightMulti(effectiveWeight);
+
+
+	nerfed_wpf = weightMulti * nerfed_wpf;
+
+
+	if (nerfed_wpf < 1) 
+		nerfed_wpf = 1;					
+	
+	
+	return nerfed_wpf;
+}
+
+
+function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shield, arm) {
 
 	str = parseInt(str);
 	ps = parseInt(ps);
+	ha = parseInt(ha);
 	wpf = parseInt(wpf);
 	dmg = parseInt(dmg);
 	arm = parseInt(arm);
-
 
 	// Calculate penalty modifier. Magical numbers by Urist
 	var penalty_mod = null;
@@ -222,7 +298,16 @@ function getWeaponDamage(str, ps, wpf, dmg, dmgType, weaponCat, mounted, shield,
 					penalty_mod = 0.85; // Mounted + shield + 1.5h
 					break;
 				case "Polearm (1h)":
-					penalty_mod = 0.72; // Mounted + shield + polearm
+					penalty_mod = 0.85*0.85; // Mounted + shield + polearm
+					break;
+				case "Bow":
+					penalty_mod = 1; // Mounted + shield + 1h
+					break;
+				case "Crossbow":
+					penalty_mod = 1; // Mounted + shield + 1h
+					break;
+				case "Throwing":
+					penalty_mod = 1; // Mounted + shield + 1h
 					break;
 				default:
 					penalty_mod = null; // Error
@@ -237,13 +322,22 @@ function getWeaponDamage(str, ps, wpf, dmg, dmgType, weaponCat, mounted, shield,
 					penalty_mod = 0.85; // Mounted + 1.5h
 					break;
 				case "2H":
-					penalty_mod = 0.765; // Mounted + 2h
+					penalty_mod = 0.85*0.9; // Mounted + 2h
 					break;
 				case "Polearm (1h)":
-					penalty_mod = 0.72; // Mounted + 1h polearm
+					penalty_mod = 0.85*0.85; // Mounted + 1h polearm
 					break;
 				case "Polearm (2h)":
-					penalty_mod = 0.65; // Mounted + 2h polearm
+					penalty_mod = 0.85*0.85*0.9; // Mounted + 2h polearm
+					break;
+				case "Bow":
+					penalty_mod = 1; // Mounted + shield + 1h
+					break;
+				case "Crossbow":
+					penalty_mod = 1; // Mounted + shield + 1h
+					break;
+				case "Throwing":
+					penalty_mod = 1; // Mounted + shield + 1h
 					break;
 				default:
 					penalty_mod = null; // Error
@@ -263,7 +357,16 @@ function getWeaponDamage(str, ps, wpf, dmg, dmgType, weaponCat, mounted, shield,
 					penalty_mod = 0.85; // 1,5h + shield
 					break;
 				case "Polearm (1h)":
-					penalty_mod = 0.72; // polearm + shield
+					penalty_mod = 0.85*0.85; // polearm + shield
+					break;
+				case "Bow":
+					penalty_mod = 1; // Mounted + shield + 1h
+					break;
+				case "Crossbow":
+					penalty_mod = 1; // Mounted + shield + 1h
+					break;
+				case "Throwing":
+					penalty_mod = 1; // Mounted + shield + 1h
 					break;
 				default:
 					penalty_mod = null; // Error
@@ -279,20 +382,47 @@ function getWeaponDamage(str, ps, wpf, dmg, dmgType, weaponCat, mounted, shield,
 	}
 	
 	// Magical numbers
-	var hold_mod = 0.85;
 	var ps_bonus = 0.08;
-	var wpf_bonus = 0.178;
+	var wpf_bonus = 0.15;
+	var basewpfbonus = 0.85;
+	var strengthbonus = str / 5;
+	var hamod = 1;
 	var armor_soak_factor_against_cut = 0.8;
 	var armor_soak_factor_against_pierce = 0.65;
 	var armor_soak_factor_against_blunt = 0.5;
 	var armor_reduction_factor_against_cut = 1.0;
 	var armor_reduction_factor_against_pierce = 0.5;
 	var armor_reduction_factor_against_blunt = 0.75;
-	//ps = str / 3 (Removed, PS is not always maxed)
+	
+
+	if(weaponCat == "Throwing")
+	{
+		ps_bonus = 0.1;
+		if(mounted)
+		{
+			hamod = 0.8 + ha * 0.019;
+		}
+	}
+	if(weaponCat == "Bow")
+	{
+		ps_bonus = 0.14;
+		if(mounted)
+		{
+			hamod = 0.8 + ha * 0.019;
+		}
+	}
+	if(weaponCat == "Crossbow")
+	{
+		basewpfbonus = 1;
+		ps_bonus = 0;
+		wpf_bonus = 0;
+		strengthbonus = 0;
+	}
 	
 	// Potential maximum damage swing can inflict
-	var potential_damage = penalty_mod * ( hold_mod * dmg * ( 1 + ps * ps_bonus ) * ( 1 + wpf / 100.0 * wpf_bonus ) + str / 5 );
+	var potential_damage = penalty_mod * ( dmg * hamod * ( 1 + ps * ps_bonus ) * ( basewpfbonus + wpf / 100.0 * wpf_bonus ) + str / 5 );
 	
+
 	// Armor soak and reduction factors based on damage type
 	var soak_factor = null;
 	var reduction_factor = null;
@@ -315,6 +445,14 @@ function getWeaponDamage(str, ps, wpf, dmg, dmgType, weaponCat, mounted, shield,
 	if (soak_factor == null || reduction_factor == null) {
 		throw "Invalid damage type: " + dmgType;
 	}
+
+	if(weaponCat == "Bow" || weaponCat == "Crossbow" || weaponCat == "Throwing")
+	{
+		soak_factor = soak_factor * 1.2;
+		reduction_factor = reduction_factor * 0.6;
+	}
+
+
 	
 	//
 	// Damage soak
