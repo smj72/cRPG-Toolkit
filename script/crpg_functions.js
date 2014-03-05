@@ -97,6 +97,9 @@ function getWPPCost(targetWPF) {
 
 /* Returns cost for next WPF point based on current */
 function getNextWPFCost(wpf) {
+	if(wpf == 0) return 1; //Fixes bug where wpp are automatically used
+
+
 	var cost = Math.floor(0.0005 * Math.pow(wpf,2) + 3);
 	
 	return cost;
@@ -105,7 +108,6 @@ function getNextWPFCost(wpf) {
 /* Gets available WPP at given level, weapon master skill level, and agility attribute level */
 function getAvailableWPP(targetLevel, targetWeaponmaster, agility) {
 	
-	// Starting WPP of 30 + 1 in all 5 WPFs
 	var totalWPP = 15 + 55 * targetWeaponmaster + 20 * (targetWeaponmaster * (targetWeaponmaster + 1) / 2) + 14 * agility;
 	
 	return totalWPP;
@@ -201,6 +203,7 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	wpf = parseInt(wpf);
 	dmg = parseInt(dmg);
 	arm = parseInt(arm);
+
 
 	// Calculate penalty modifier. Magical numbers by Urist
 	var penalty_mod = null;
