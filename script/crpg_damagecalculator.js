@@ -14,11 +14,15 @@
 				.append(
 					$("<p />")
 						.addClass("credits")
-						.text("Javascript implementation by Vargas, inspiring Python script by virus_found, research by Urist. Formulas updated by San.")
+						.text("Javascript implementation by Vargas, inspiring Python script by virus_found, research by Urist. Formulae updated by San.")
 				)
 				.append(
 					$("<p />")
 						.text("Calculates potential damage player can inflict on target. Ignores movement and hit location. It appears that random factor is included in damage calculation. This is represented by displaying the average inflicted damage as well as minimum and maximum.")
+					)
+				.append(
+					$("<p />")
+						.text("Mounted and shield damage values may not be accurate.")
 					);
 				
 				// Validates all inputs and then calls for output
