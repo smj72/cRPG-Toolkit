@@ -63,11 +63,18 @@
 					
 					var output;					
 					try {
+						var eweight = Math.round(getEffectiveWeight(inputs["helmet"].val(), inputs["bodyarmor"].val(), inputs["handarmor"].val(), inputs["boots"].val()) * 10) / 10;
+						var ewpf = getEffectiveWPF(
+							inputs["WPF"].val(),					
+							inputs["Power Strike"].val(),
+							eweight,
+							inputs["Weapon type"].val()
+						);
 						var damage = getWeaponDamage(
 							inputs["Strength"].val(),						
 							inputs["Power Strike"].val(),
 							inputs["Horse Archery"].val(),
-							inputs["WPF"].val(),
+							ewpf,
 							inputs["Weapon damage"].val(),
 							inputs["Damage type"].val(),
 							inputs["Weapon type"].val(),
@@ -183,6 +190,13 @@
 					damageTypeGraphWrap.append(damageTypeGraphContainer);					
 					
 					/* Calculate dataset */
+					var eweight = Math.round(getEffectiveWeight(inputs["helmet"].val(), inputs["bodyarmor"].val(), inputs["handarmor"].val(), inputs["boots"].val()) * 10) / 10;
+						var ewpf = getEffectiveWPF(
+							inputs["WPF"].val(),					
+							inputs["Power Strike"].val(),
+							eweight,
+							inputs["Weapon type"].val()
+						);
 					var damages = [ ["Cut", [] ], ["Pierce", [] ], ["Blunt", [] ] ];
 					for (var armor = 0; armor < 100; armor++) {
 						
@@ -191,7 +205,7 @@
 								inputs["Strength"].val(),						
 								inputs["Power Strike"].val(),
 								inputs["Horse Archery"].val(),
-								inputs["WPF"].val(),
+								ewpf,
 								inputs["Weapon damage"].val(),
 								damages[i][0],
 								inputs["Weapon type"].val(),
