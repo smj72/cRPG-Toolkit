@@ -14,7 +14,7 @@
 				.append(
 					$("<p />")
 						.addClass("credits")
-						.text("Javascript implementation by Vargas, inspiring Python script by virus_found, research by Urist")
+						.text("Javascript implementation by Vargas, inspiring Python script by virus_found, research by Urist. Formulas updated by San.")
 				)
 				.append(
 					$("<p />")
@@ -79,7 +79,7 @@
 						output = $("<ul />")
 						.css({
 							"font-size": "110%",
-							"margin": "3em 0 5em 0"
+							"margin": "1em 0 2em 0"
 						})
 						.append(
 							$("<li />")
@@ -87,7 +87,7 @@
 						)
 						.append(
 							$("<li />")
-								.text("Average: " + ((damage[0] + damage[1]) / 2))
+								.text("Average: " + Math.max(0,(Math.round((damage[0] + damage[1]) * 50.0))/ 100.0))
 						)
 						.append(
 							$("<li />")
@@ -128,7 +128,7 @@
 						output2 = $("<ul />")
 						.css({
 							"font-size": "110%",
-							"margin": "3em 0 5em 0"
+							"margin": "1em 0 2em 0"
 						})
 						.append(
 							$("<li />")
@@ -156,7 +156,6 @@
 						output2 = $("<p />").text(exc);
 					}
 					outputWrap.append(output2)
-
 					
 					/* Graphic for damage for each damage type and armor */
 					outputWrap.append(
@@ -242,12 +241,13 @@
 						$("<h4 />").text("Character")
 					);					
 				var charInputs = ["Strength", "Power Strike", "Horse Archery", "WPF"];
+				var valInputs  = ["18", "6", "1", "140"];
 				for (var i = 0; i < charInputs.length; i++) {
 					var input = $("<input />")
 						.addClass("controllable controllable_increment_1")
 						.attr("name", "input_" + charInputs[i].toLowerCase().replace(/\s/ig, ""))
 						.attr("type", "text")
-						.attr("value", "1")
+						.attr("value", valInputs[i])
 						.bind("change", inputChanged);
 					
 					// Put field to the map
@@ -301,7 +301,7 @@
 					.attr({
 					"type": "text",
 					"size": "3",
-					"value": "30",
+					"value": "34",
 					"name": "input_weapondamage"
 					})
 					.bind("change", inputChanged);
@@ -380,6 +380,39 @@
 				
 				inputs["Shield"] = shieldCheckbox;
 				
+				// Weapon Weight and knockdown, currently commented out
+
+				/*var weaponWeight = $("<input />")
+					.addClass("controllable controllable_increment_1")
+					.attr({
+					"type": "text",
+					"size": "3",
+					"value": "2",
+					"name": "input_weaponWeight"
+					})
+					.bind("change", inputChanged);
+
+				inputs["weaponWeight"] = weaponWeight;
+				wrap.append(
+					$("<div />")
+						.addClass("inputWrap")
+						.append(
+							$("<label />").text("Weapon weight")
+						)
+						.append(
+							weaponWeight
+						)	
+				);
+
+				var knockdownCheckbox = $("<input />")
+					.attr({
+					"type": "checkbox",
+					"name": "input_knockdown"
+					})
+					.bind("change", inputChanged);
+				
+				inputs["Knockdown"] = knockdownCheckbox;*/
+
 
 				// Armor weight stuff
 
@@ -478,6 +511,17 @@
 
 				// End.
 
+				/*wrap.append(
+					$("<div />")
+						.addClass("inputWrap")
+						.append(
+							$("<label />").text("Knockdown")
+						)
+						.append(
+							knockdownCheckbox
+						)
+				);*/
+
 				wrap.append(
 					$("<div />")
 						.addClass("inputWrap")
@@ -504,7 +548,7 @@
 						.addClass("controllable controllable_increment_1")
 						.attr("name", "input_" + targetInputs[i].toLowerCase().replace(/\s/ig, ""))
 						.attr("type", "text")
-						.attr("value", "10")
+						.attr("value", "55")
 						.bind("change", inputChanged);
 					
 					// Put field to the map

@@ -24,11 +24,11 @@
 					)
 				.append(
 					$("<p />")
-						.text("WPF calculation can have minor error (1-2 WPF), as it is based on player observations and not exact function like before (thanks Gafferjack).")
+						.text("Any wpf discrepancies are from shared melee wpf. Increasing wpf in one melee class spreads it to the others.")
 				)
 				.append(
 					$("<p />")
-						.text("For cRPG version 0.232")
+						.text("For cRPG version 0.3.3.0")
 				)
 				.append(
 					charControls
@@ -168,7 +168,7 @@
 					try {						
 						value = parseInt(input.val());							
 						
-						if (value < 1 || value > 100 || isNaN(value)) {
+						if (value < 1 || isNaN(value)) {
 							throw ("Invalid value");
 						}
 						
@@ -176,7 +176,15 @@
 						value = 1;
 						input.val(value);
 					}
-				
+
+					//Clamp value
+					if(value > 37)
+					{
+						value = 37;
+						input.val(value);
+					}
+					
+
 					// Validate attribute inputs
 					for (i = 0; i < attrInputs.length; i++) {
 						var inputName = attrInputs[i];
@@ -313,7 +321,7 @@
 						usedSkillOutput.addClass("error");
 				
 					// WPP totals					
-					var availableWpp = getAvailableWPP( parseInt(inputs["Level"].val()), parseInt(inputs["Weapon Master"].val()) );
+					var availableWpp = getAvailableWPP( parseInt(inputs["Level"].val()), parseInt(inputs["Weapon Master"].val()), parseInt(inputs["Agility"].val()) );
 					availableWppOutput.text(availableWpp);
 					
 					var usedWpp = -6;
@@ -386,11 +394,51 @@
 
 					
 					var proficiencyList = $("<ul />");
+					//Calculate shared wpf
+					
+					var oneHandedWpf = parseInt(inputs[wpfInputs[0]].val());
+					var twoHandedWpf = parseInt(inputs[wpfInputs[1]].val());
+					var polearmWpf = parseInt(inputs[wpfInputs[2]].val());
+
+					var total1h = getSharedWpf(oneHandedWpf,twoHandedWpf,polearmWpf);
+					var total2h = getSharedWpf(twoHandedWpf,oneHandedWpf,polearmWpf);
+					var totalpole = getSharedWpf(polearmWpf,oneHandedWpf,twoHandedWpf);
+
 					for(var i = 0; i < wpfInputs.length; i++) {
-						if (!(inputs["Build Listing Style"].val() == "simple" && parseInt(inputs[wpfInputs[i]].val()) < 2))
-						proficiencyList.append(
-							$("<li />").text( wpfInputs[i] + ": " + inputs[wpfInputs[i]].val() )
-						);
+						//if (!(inputs["Build Listing Style"].val() == "simple" && parseInt(inputs[wpfInputs[i]].val()) < 2))
+						{
+							if(i == 0)
+							{
+								
+								proficiencyList.append(
+								$("<li />").text( wpfInputs[i] + ": " + total1h )
+								);
+								
+							}
+							else if(i == 1)
+							{
+								
+								proficiencyList.append(
+								$("<li />").text( wpfInputs[i] + ": " + total2h )
+								);
+								
+							}
+							else if(i == 2)
+							{
+								
+								proficiencyList.append(
+								$("<li />").text( wpfInputs[i] + ": " + totalpole )
+								);
+								
+							}
+							else
+							{
+								proficiencyList.append(
+								$("<li />").text( wpfInputs[i] + ": " + inputs[wpfInputs[i]].val() )
+							);
+							}
+						}
+						
 					}
 					outputWrap.append(proficiencyList);
 				}
@@ -647,7 +695,7 @@
 				var wpfInputs = ["One Handed", "Two Handed", "Polearm", "Archery", "Crossbow", "Throwing"];
 				for (var i = 0; i < wpfInputs.length; i++) {
 					var input = $("<input />")
-						.addClass("controllable controllable_increment_10")
+						.addClass("controllable controllable_increment_1")
 						.attr("name", "input_" + wpfInputs[i].toLowerCase().replace(/\s/ig, ""))
 						.attr("type", "text")
 						.attr("value", "1")
@@ -669,10 +717,12 @@
 						.bind("click", function() {
 							// Maximize single wpf
 							var thisInput = $(this).parent().find("input");
+							var currentWpp = getWPPCost(parseInt(thisInput.val()));
+							var used = parseInt(usedWppOutput.text()) - currentWpp;
 							thisInput.val(1);
 							
 							var available = parseInt(availableWppOutput.text());
-							var used = parseInt(usedWppOutput.text()) - parseInt(thisInput.val());
+							
 							var freeWpp = available - used;
 							var newWpfValue = 1;
 							

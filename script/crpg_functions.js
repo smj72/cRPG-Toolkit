@@ -8,10 +8,29 @@ function getXPForLevel(targetLevel) {
 	if (targetLevel <= 29) {
 		return Math.round((250 * Math.pow(1.26, targetLevel - 1) + targetLevel * 550) * 25 - 17000);
 	// At level 31, nice value
-	} else if (targetLevel == 30) {
-		return 8892403;
-	// After that, double the previous xp for each level
-	} else {
+	} 
+	else if (targetLevel == 30) {
+		return 8735843;
+	}
+	else if (targetLevel == 31) {
+		return 17784806;
+	} 
+	else if (targetLevel == 32) {
+		return 37332277;
+	} 
+	else if (targetLevel == 33) {
+		return 80873140;
+	} 
+	else if (targetLevel == 34) {
+		return 180977644;
+	} 
+	else if (targetLevel == 35) {
+		return 418780850;
+	}
+	else if (targetLevel == 36) {
+		return 1003125954;
+	} 
+	else {
 		return getXPForLevel(targetLevel) * 2;
 	}
 }
@@ -33,7 +52,9 @@ function getLevelForXp(xp) {
 }
 
 function getTimeForXP(xpNeeded, xpGainPerMinute, generation, multiplier) {
-	var xpGain = (xpGainPerMinute * (1 + (generation - 1) / 10.0) * multiplier);
+
+
+	var xpGain = ((xpGainPerMinute + (generation - 1) * 30) * multiplier);
 	var minutesNeeded = xpNeeded / xpGain;
 	
 	var hours = Math.floor(minutesNeeded / 60);
@@ -76,68 +97,26 @@ function getWPPCost(targetWPF) {
 
 /* Returns cost for next WPF point based on current */
 function getNextWPFCost(wpf) {
-	var cost = 0;
-	
-	if (wpf < 51){
-		cost = 1;
-	} else if (wpf < 72) {
-		cost = 2;
-	} else if (wpf < 88) {
-		cost = 3;
-	} else if (wpf < 101) {
-		cost = 4;
-	} else if (wpf < 113) {
-		cost = 5;
-	} else if (wpf < 124) {
-		cost = 6;
-	} else if (wpf < 134) {
-		cost = 7;
-	} else if (wpf < 143) {
-		cost = 8;
-	} else if (wpf < 151) {
-		cost = 9;
-	} else if (wpf < 160) {
-		cost = 10;
-	} else if (wpf < 167) {
-		cost = 11;
-	} else if (wpf < 175) {
-		cost = 12;
-	} else if (wpf < 182) {
-		cost = 13;
-	} else if (wpf < 189) {
-		cost = 14;
-	} else if (wpf < 195) {
-		cost = 15;
-	} else if (wpf < 201) {
-		cost = 16;
-	} else if (wpf < 208) {
-		cost = 17;
-	} else {
-		cost = 18;
-	}
+	var cost = Math.floor(0.0005 * Math.pow(wpf,2) + 3);
 	
 	return cost;
 }
 
-/* Gets available WPP at given level and weapon master skill level */
-function getAvailableWPP(targetLevel, targetWeaponmaster) {
+/* Gets available WPP at given level, weapon master skill level, and agility attribute level */
+function getAvailableWPP(targetLevel, targetWeaponmaster, agility) {
 	
 	// Starting WPP of 30 + 1 in all 5 WPFs
-	var totalWPP = 30 + 5;
-	
-	// Base wpp for level
-	for (var lvl = 2; lvl <= targetLevel; lvl++) {
-		var wppForLevel = 5 + Math.floor(lvl / 5);
-		totalWPP += wppForLevel;
-	}
-	
-	// Bonus WPP from Weapon master
-	for (var wm = 1; wm <= targetWeaponmaster; wm++) {
-		var wppForWm = (20 + (10 * wm));
-		totalWPP += wppForWm;
-	}
+	var totalWPP = 15 + 55 * targetWeaponmaster + 20 * (targetWeaponmaster * (targetWeaponmaster + 1) / 2) + 14 * agility;
 	
 	return totalWPP;
+}
+
+
+/* Adds shared wpf to secondary melee classes */
+function getSharedWpf(wpfPrimary, wpfSecondary, wpfTertiary)
+{
+	return Math.floor((Math.max(wpfSecondary*0.7-30, 0) + Math.max(wpfTertiary*0.7-30, 0)) * 0.3 + wpfPrimary);
+
 }
 
 /* Returns available skill points at given level */
@@ -146,81 +125,6 @@ function getAvailableSkillpoints(level) {
 	return level - 1 + 2;
 }
 
-/* Returns encumberance for given armor weights */
-function getEncumberance(head_armor, body_armor, leg_armor, hand_armor) {
-	var encumberance = 0;
-	encumberance += head_armor * 3;
-	encumberance += body_armor;
-	encumberance += hand_armor * 2;
-	encumberance += leg_armor;
-	encumberance -= 5
-
-	if (encumberance < 0) 
-		encumberance = 0;
-
-	encumberance = Math.floor( Math.pow(encumberance, 1.12));
-	
-	return encumberance;
-}
-
-
-/* Returns effective archery wpf, pd and melee wpf for given encumberance in three-object array */
-function getEffectiveWpfs(pd, archery_wpf, melee_wpf, encumberance) {
-	pd = parseInt(pd);
-	archery_wpf = parseInt(archery_wpf);
-	melee_wpf = parseInt(melee_wpf);
-	
-	encumberance = parseFloat(encumberance);					
-	
-	var nerfed_wpf = archery_wpf - (pd * 14);
-
-	if (nerfed_wpf < 1) 
-		nerfed_wpf = 1;					
-
-	nerfed_wpf = Math.floor( Math.pow(nerfed_wpf, 1.16));
-
-	var encumbered_archery_wpf = nerfed_wpf - (encumberance * 2.5);
-
-	var pd_malus = 0;
-
-	if (encumbered_archery_wpf < 0) {
-		encumbered_archery_wpf = 1;
-		pd_malus = Math.abs(encumbered_archery_wpf);
-		pd_malus = Math.floor(pd_malus / 25) + 1;
-	} else if (encumbered_archery_wpf < 1) {
-		encumbered_archery_wpf = 1;
-	}
-
-	var effective_pd = pd - pd_malus;
-
-	var encumbered_melee_wpf = melee_wpf - encumberance;
-
-	if (encumbered_melee_wpf < 1) 
-		encumbered_melee_wpf = 1
-	
-	return [encumbered_archery_wpf, effective_pd, encumbered_melee_wpf];
-}
-
-function getArmorReducedDamage(basedamage, armor, soak, reduction, soakrandom, damagerandom)
-{
-	basedamage = parseInt(basedamage);
-	armor = parseInt(armor);
-	soak = parseFloat(soak);
-	reduction = parseFloat(reduction);
-	soakrandom = parseFloat(soakrandom);
-	damagerandom = parseFloat(damagerandom);
-
-
-	var randomized_soak = (soakrandom * 0.55 + 0.45) * soak;
-	var randomized_damage = (damagerandom * 0.1 + 0.9) * basedamage;
-	var soaked_damage = Math.max(randomized_damage - randomized_soak, 0);
-
-	var randomized_reduction = Math.exp((soakrandom * 0.55 + 0.45) * reduction * 0.014);
-	var reduced_damage = (1 - 1 / randomized_reduction) * soaked_damage;
-	var damage_difference = Math.round(reduced_damage + randomized_soak);
-	return randomized_damage - damage_difference;
-	
-}
 
 /* Gets effective wpf properly! */
 function getEffectiveWeight(helmet, chest, hand, feet) {
@@ -229,7 +133,7 @@ function getEffectiveWeight(helmet, chest, hand, feet) {
 	hand = parseFloat(hand);
 	feet = parseFloat(feet);
 
-	var eweight = Math.max(0, 3*helmet + chest + feet + 2*hand - 7);
+	var eweight = Math.max(0, 2*helmet + chest + feet + 4*hand - 10);
 	return eweight;
 }
 
@@ -244,9 +148,9 @@ function getPowerPenalty(ps, weaponType)
 	var penalty = 0;
 
 	if(weaponType == "Bow")
-		penalty = - (ps * 14);
+		penalty = - Math.round((Math.max(14 * ps - Math.pow(1.5,ps), 0)) * 10) / 10; //round to nearest decimal place
 	if(weaponType == "Throwing")
-		penalty = - (ps * 13);
+		penalty = - (ps * 11);
 	return penalty;
 }
 
@@ -275,6 +179,19 @@ function getEffectiveWPF(wpf, ps, effectiveWeight, weaponType) {
 	return nerfed_wpf;
 }
 
+/* Find the knockdown chance of a weapon if it hits the body*/
+function getKnockdownChanceBody(weaponWeight, rawDamage)
+{
+	var kdChance = Math.max(0,(Math.min(weaponWeight * 0.33, 2.0) * Math.min((rawDamage - 40.0) * 0.2, 5.0) * 0.015) - 0.05);
+	return kdChance;
+}
+
+/* Find the knockdown chance of a weapon if it hits the head or legs*/
+function getKnockdownChanceHeadLegs(weaponWeight, rawDamage)
+{
+	var kdChance = Math.min(Math.max(item_weight * 0.33, 1.0), 2.0) * (Math.min(Math.max((rawDamage - 40.0) * 0.5, 5.0), 15.0) * 0.015);
+	return kdChance;
+}
 
 function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shield, arm) {
 
@@ -292,13 +209,13 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 		if (shield) {
 			switch (weaponCat) {
 				case "1H":
-					penalty_mod = 1; // Mounted + shield + 1h
+					penalty_mod = 0.9; // Mounted + shield + 1h
 					break;
 				case "1/2H":
 					penalty_mod = 0.85; // Mounted + shield + 1.5h
 					break;
 				case "Polearm (1h)":
-					penalty_mod = 0.85*0.85; // Mounted + shield + polearm
+					penalty_mod = 0.85; // Mounted + shield + polearm
 					break;
 				case "Bow":
 					penalty_mod = 1; // Mounted + shield + 1h
@@ -316,19 +233,19 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 		} else {
 			switch (weaponCat) {
 				case "1H":
-					penalty_mod = 1; // Mounted + 1h
+					penalty_mod = 0.9; // Mounted + 1h
 					break;
 				case "1/2H":
 					penalty_mod = 0.85; // Mounted + 1.5h
 					break;
 				case "2H":
-					penalty_mod = 0.85*0.9; // Mounted + 2h
+					penalty_mod = 0.85; // Mounted + 2h
 					break;
 				case "Polearm (1h)":
-					penalty_mod = 0.85*0.85; // Mounted + 1h polearm
+					penalty_mod = 0.85; // Mounted + 1h polearm
 					break;
 				case "Polearm (2h)":
-					penalty_mod = 0.85*0.85*0.9; // Mounted + 2h polearm
+					penalty_mod = 0.85*0.9; // Mounted + 2h polearm
 					break;
 				case "Bow":
 					penalty_mod = 1; // Mounted + shield + 1h
@@ -354,10 +271,10 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 					penalty_mod = 1; // 1h + shield
 					break;
 				case "1/2H":
-					penalty_mod = 0.85; // 1,5h + shield
+					penalty_mod = 0.9; // 1,5h + shield
 					break;
 				case "Polearm (1h)":
-					penalty_mod = 0.85*0.85; // polearm + shield
+					penalty_mod = 0.9; // polearm + shield
 					break;
 				case "Bow":
 					penalty_mod = 1; // Mounted + shield + 1h
@@ -387,12 +304,12 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	var basewpfbonus = 0.85;
 	var strengthbonus = str / 5;
 	var hamod = 1;
-	var armor_soak_factor_against_cut = 0.8;
-	var armor_soak_factor_against_pierce = 0.65;
-	var armor_soak_factor_against_blunt = 0.5;
-	var armor_reduction_factor_against_cut = 1.0;
-	var armor_reduction_factor_against_pierce = 0.5;
-	var armor_reduction_factor_against_blunt = 0.75;
+	var armor_soak_factor_against_cut = 0.65;
+	var armor_soak_factor_against_pierce = 0.5;
+	var armor_soak_factor_against_blunt = 0.4;
+	var armor_reduction_factor_against_cut = 1.6;
+	var armor_reduction_factor_against_pierce = 1.1;
+	var armor_reduction_factor_against_blunt = 1.3;
 	
 
 	if(weaponCat == "Throwing")
@@ -424,20 +341,20 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	
 
 	// Armor soak and reduction factors based on damage type
-	var soak_factor = null;
-	var reduction_factor = null;
+	var soak_factor = arm;
+	var reduction_factor = arm;
 	switch (dmgType) {
 		case "Cut":
-			soak_factor = armor_soak_factor_against_cut;
-			reduction_factor = armor_reduction_factor_against_cut;
+			soak_factor *= armor_soak_factor_against_cut;
+			reduction_factor *= armor_reduction_factor_against_cut;
 			break;
 		case "Pierce":
-			soak_factor = armor_soak_factor_against_pierce;
-			reduction_factor = armor_reduction_factor_against_pierce;
+			soak_factor *= armor_soak_factor_against_pierce;
+			reduction_factor *= armor_reduction_factor_against_pierce;
 			break;
 		case "Blunt":
-			soak_factor = armor_soak_factor_against_blunt;
-			reduction_factor = armor_reduction_factor_against_blunt;
+			soak_factor *= armor_soak_factor_against_blunt;
+			reduction_factor *= armor_reduction_factor_against_blunt;
 			break;
 		default:
 			break;
@@ -446,34 +363,44 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 		throw "Invalid damage type: " + dmgType;
 	}
 
-	if(weaponCat == "Bow" || weaponCat == "Crossbow" || weaponCat == "Throwing")
-	{
-		soak_factor = soak_factor * 1.2;
-		reduction_factor = reduction_factor * 0.6;
-	}
-
-
+	//Randomized damage
+	var randomized_damage_max = potential_damage;
+	var randomized_damage_min = potential_damage * 0.9;
 	
-	//
 	// Damage soak
-	
-	// Urist:
-	// "However here is where randomisation kicks in again. I think that a
-	// random number between the full and the half armor value are used."
-	var min_damage = potential_damage - 1 * arm * soak_factor;
-	var max_damage = potential_damage - 0.5 * arm * soak_factor;
-	
+
+	//Randomization of damage has been reduced
+
+	var soak_min =  (0.75 * soak_factor);
+	var soak_max =  (0.7  * soak_factor);
+	var soaked_damage_min = Math.max(0, randomized_damage_min - soak_min);
+	var soaked_damage_max = randomized_damage_max - soak_max;
 	//Damage reduction
 	
 	// Urist:
 	// "The same random armor between the half and full armor points
 	// of the armor is used."
-	min_damage = min_damage * (1 - arm / 100.0 * reduction_factor);
-	max_damage = max_damage * ( 1 - 0.5 * arm / 100.0 * reduction_factor );
 	
-	// Round to integer
-	min_damage = Math.round(min_damage);
-	max_damage = Math.round(max_damage);
+	var reduction_max = Math.exp(0.7 * reduction_factor * 0.014);
+	var reduction_min = Math.exp(reduction_factor * 0.014);
+	var reduced_damage_min = (1.0 - 1.0 / reduction_min) * soaked_damage_min;
+	var reduced_damage_max = (1.0 - 1.0 / reduction_max) * soaked_damage_max;
+
+	if (reduction_factor < 0.00001){
+		reduced_damage_min  = 0;
+		reduced_damage_max  = 0;
+	}
+
+
+	var damage_difference_min = reduced_damage_min + soak_min;
+	var effective_damage_min = randomized_damage_min - damage_difference_min;
+
+	var damage_difference_max = reduced_damage_max + soak_max;
+	var effective_damage_max = randomized_damage_max - damage_difference_max;
+	
+	// Round to nearest 2nd decimal, avoiding NaN from 0
+	var min_damage = Math.max(0, Math.round(effective_damage_min * 100) / 100);
+	var max_damage = Math.max(0, Math.round(effective_damage_max * 100) / 100);
 	
 	// No negative damage (no healing ;__; )
 	if (min_damage < 0) {

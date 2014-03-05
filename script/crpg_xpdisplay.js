@@ -13,26 +13,22 @@
 				)
 				.append(
 					$("<p />")
-						.text("Displays the amount of experience needed for each level, and calculates time required to gain that amount of xp at given generation, multiplier and xp/minute rating. Default value of 1000 xp/min is currently used (in version 0.210), but it can be changed to accomodate to changes in game functionality.")
-					)
-				.append(
-					$("<p />")
-						.text("Calculator is accurate only to level 30. If there is a level 30+ available, send me (Vargas) a PM on the forum with your current level and xp required for next level. I'll update this.")
-				);
+						.text("Displays the amount of experience needed for each level, and calculates time required to gain that amount of xp at given generation, multiplier and xp/minute rating. Default value of 1000 xp/min is currently used (in version 0.3.3.0), but it can be changed to accomodate to changes in game functionality.")
+					);
 				
 				// Validates all inputs and then calls for output
 				var inputChanged = function() {
 					
 					
-					if ( parseInt(inputs["Target level"].val() ) > 50) {
-						inputs["Target level"].val(50);
+					if ( parseInt(inputs["Target level"].val() ) > 37) {
+						inputs["Target level"].val(37);
 					}
 					else if ( parseInt(inputs["Target level"].val()) < 2) {
 						inputs["Target level"].val(2);
 					}
 					
-					if ( parseInt(inputs["Generation"].val() ) > 50) {
-						inputs["Generation"].val(50);
+					if ( parseInt(inputs["Generation"].val() ) > 16) {
+						inputs["Generation"].val(16);
 					}
 					else if ( parseInt(inputs["Generation"].val()) < 1) {
 						inputs["Generation"].val(1);
@@ -153,7 +149,7 @@
 						$("<h4 />").text("Level (min / max)")
 					);
 				
-				var xpInputs = [ ["Target level", 30], ["Generation", 1], ["Multiplier", 1] , ["XP / Minute", 1000] ];
+				var xpInputs = [ ["Target level", 37], ["Generation", 1], ["Multiplier", 1] , ["XP / Minute", 1000] ];
 				for (var i = 0; i < xpInputs.length; i++) {
 					var input = $("<input />")
 						.addClass("controllable controllable_increment_1")
