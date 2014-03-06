@@ -64,23 +64,18 @@
 					var output;					
 					try {
 						var eweight = Math.round(getEffectiveWeight(inputs["helmet"].val(), inputs["bodyarmor"].val(), inputs["handarmor"].val(), inputs["boots"].val()) * 10) / 10;
-						var ewpf = getEffectiveWPF(
-							inputs["WPF"].val(),					
-							inputs["Power Strike"].val(),
-							eweight,
-							inputs["Weapon type"].val()
-						);
 						var damage = getWeaponDamage(
 							inputs["Strength"].val(),						
 							inputs["Power Strike"].val(),
 							inputs["Horse Archery"].val(),
-							ewpf,
+							inputs["WPF"].val(),
 							inputs["Weapon damage"].val(),
 							inputs["Damage type"].val(),
 							inputs["Weapon type"].val(),
 							inputs["Mounted"].is(":checked"),
 							inputs["Shield"].is(":checked"),
-							inputs["Armor"].val()
+							inputs["Armor"].val(),
+							eweight
 						);
 						
 						outputWrap.append(
@@ -98,14 +93,30 @@
 						)
 						.append(
 							$("<li />")
-								.text("Average: " + Math.max(0,(Math.round((damage[0] + damage[1]) * 50.0))/ 100.0))
+								.text("Real Average: " + damage[2] /*Math.max(0,(Math.round((damage[0] + damage[1]) * 50.0))/ 100.0)*/)
 						)
 						.append(
 							$("<li />")
 								.text("Maximum: " + damage[1])
+						)
+						.append(
+							$("<li />")
+								.text("Raw Damage: " + damage[3])
 						);
 
-
+						if(inputs["Knockdown"].is(":checked") && inputs["Damage type"].val() == "Blunt")
+						{
+							var kdHL = getKnockdownChanceHeadLegs(parseFloat(inputs["weaponWeight"].val()), damage[3]);
+							var kdB  = getKnockdownChanceBody(parseFloat(inputs["weaponWeight"].val()), damage[3]);
+							output.append(
+							$("<li />")
+								.text("Knockdown Chance for Head/Legs: " + kdHL + "%")
+							)
+							.append(
+							$("<li />")
+								.text("Knockdown Chance for Body: " + kdB + "%")
+							);
+						}
 					} catch(exc){
 						output = $("<p />").text(exc);
 					}
@@ -128,7 +139,7 @@
 						var weight =  Math.round((parseFloat(inputs["helmet"].val()) + parseFloat(inputs["bodyarmor"].val()) + parseFloat(inputs["handarmor"].val()) + parseFloat(inputs["boots"].val())) * 10) / 10;
 						var powerpenalty = -getPowerPenalty(parseInt(inputs["Power Strike"].val()), inputs["Weapon type"].val());
 
-						var weightpenalty = (1 - getWeightMulti(eweight)) * (parseInt(inputs["WPF"].val()) - powerpenalty);
+						var weightpenalty = parseInt(inputs["WPF"].val()) - ((/*1 -*/ getWeightMulti(eweight)) * (parseInt(inputs["WPF"].val())) / 100);
 						weightpenalty = Math.round(weightpenalty);
 						ewpf = Math.round(ewpf);
 
@@ -191,12 +202,6 @@
 					
 					/* Calculate dataset */
 					var eweight = Math.round(getEffectiveWeight(inputs["helmet"].val(), inputs["bodyarmor"].val(), inputs["handarmor"].val(), inputs["boots"].val()) * 10) / 10;
-						var ewpf = getEffectiveWPF(
-							inputs["WPF"].val(),					
-							inputs["Power Strike"].val(),
-							eweight,
-							inputs["Weapon type"].val()
-						);
 					var damages = [ ["Cut", [] ], ["Pierce", [] ], ["Blunt", [] ] ];
 					for (var armor = 0; armor < 100; armor++) {
 						
@@ -205,15 +210,16 @@
 								inputs["Strength"].val(),						
 								inputs["Power Strike"].val(),
 								inputs["Horse Archery"].val(),
-								ewpf,
+								inputs["WPF"].val(),
 								inputs["Weapon damage"].val(),
 								damages[i][0],
 								inputs["Weapon type"].val(),
 								inputs["Mounted"].is(":checked"),
 								inputs["Shield"].is(":checked"),
-								armor
+								armor,
+								eweight
 							);
-							damages[i][1].push( [armor, (damage[0] + damage[1]) / 2] );
+							damages[i][1].push( [armor,damage[2]] );
 						}
 					}
 					
@@ -400,7 +406,7 @@
 				
 				// Weapon Weight and knockdown, currently commented out
 
-				/*var weaponWeight = $("<input />")
+				var weaponWeight = $("<input />")
 					.addClass("controllable controllable_increment_1")
 					.attr({
 					"type": "text",
@@ -429,7 +435,7 @@
 					})
 					.bind("change", inputChanged);
 				
-				inputs["Knockdown"] = knockdownCheckbox;*/
+				inputs["Knockdown"] = knockdownCheckbox;
 
 
 				// Armor weight stuff
@@ -529,7 +535,7 @@
 
 				// End.
 
-				/*wrap.append(
+				wrap.append(
 					$("<div />")
 						.addClass("inputWrap")
 						.append(
@@ -538,7 +544,7 @@
 						.append(
 							knockdownCheckbox
 						)
-				);*/
+				);
 
 				wrap.append(
 					$("<div />")

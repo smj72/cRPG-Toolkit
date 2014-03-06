@@ -99,7 +99,6 @@ function getWPPCost(targetWPF) {
 function getNextWPFCost(wpf) {
 	if(wpf == 0) return 1; //Fixes bug where wpp are automatically used
 
-
 	var cost = Math.floor(0.0005 * Math.pow(wpf,2) + 3);
 	
 	return cost;
@@ -135,18 +134,19 @@ function getEffectiveWeight(helmet, chest, hand, feet) {
 	hand = parseFloat(hand);
 	feet = parseFloat(feet);
 
-	var eweight = Math.max(0, 2*helmet + chest + feet + 4*hand - 10);
+	var eweight = Math.pow(Math.max(0, 2*helmet + chest + feet + 4*hand - 10), 1.12);
 	return eweight;
 }
 
-function getWeightMulti(effectiveWeight)
-{
+function getWeightMulti(effectiveWeight){
+
 	effectiveWeight = parseFloat(effectiveWeight);
-	return (1 - 0.01 * (effectiveWeight));
+	//return (1 - 0.01 * (effectiveWeight)); //Old value
+	return Math.abs((2 * effectiveWeight)/3 - 100) // Must multiply by wpf / 100
 }
 
-function getPowerPenalty(ps, weaponType)
-{
+function getPowerPenalty(ps, weaponType){
+
 	var penalty = 0;
 
 	if(weaponType == "Bow")
@@ -164,19 +164,12 @@ function getEffectiveWPF(wpf, ps, effectiveWeight, weaponType) {
 	ps = parseInt(ps);
 
 
-
-	var nerfed_wpf = wpf + getPowerPenalty(ps, weaponType);
-
-
 	var weightMulti = getWeightMulti(effectiveWeight);
-
-
-	nerfed_wpf = weightMulti * nerfed_wpf;
-
+	wpf = ((weightMulti * wpf) / 100);
+	var nerfed_wpf = wpf + getPowerPenalty(ps, weaponType);
 
 	if (nerfed_wpf < 1) 
 		nerfed_wpf = 1;					
-	
 	
 	return nerfed_wpf;
 }
@@ -184,18 +177,24 @@ function getEffectiveWPF(wpf, ps, effectiveWeight, weaponType) {
 /* Find the knockdown chance of a weapon if it hits the body*/
 function getKnockdownChanceBody(weaponWeight, rawDamage)
 {
-	var kdChance = Math.max(0,(Math.min(weaponWeight * 0.33, 2.0) * Math.min((rawDamage - 40.0) * 0.2, 5.0) * 0.015) - 0.05);
+	var weightScale = Math.min(weaponWeight * 0.33, 2.0);
+	var damageScale = Math.min((rawDamage - 40.0) * 0.2, 5.0);
+	var kdChance = Math.max(0, Math.round(((weightScale * damageScale * 0.015) - 0.05) * 10000) / 100);
+	
 	return kdChance;
 }
 
 /* Find the knockdown chance of a weapon if it hits the head or legs*/
 function getKnockdownChanceHeadLegs(weaponWeight, rawDamage)
 {
-	var kdChance = Math.min(Math.max(item_weight * 0.33, 1.0), 2.0) * (Math.min(Math.max((rawDamage - 40.0) * 0.5, 5.0), 15.0) * 0.015);
+	var weightScale = Math.min(Math.max(weaponWeight * 0.33, 1.0), 2.0);
+	var damageScale = Math.min(Math.max((rawDamage - 40.0) * 0.5, 5.0), 15.0);
+	var kdChance =  Math.max(0, Math.round((weightScale * damageScale * 0.015) * 10000) / 100);
+	
 	return kdChance;
 }
 
-function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shield, arm) {
+function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shield, arm, eweight) {
 
 	str = parseInt(str);
 	ps = parseInt(ps);
@@ -203,7 +202,9 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	wpf = parseInt(wpf);
 	dmg = parseInt(dmg);
 	arm = parseInt(arm);
+	eweight = parseInt(eweight);
 
+	var ewpf = getEffectiveWPF(wpf, ps, eweight, weaponCat);
 
 	// Calculate penalty modifier. Magical numbers by Urist
 	var penalty_mod = null;
@@ -314,7 +315,6 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	var armor_reduction_factor_against_pierce = 1.1;
 	var armor_reduction_factor_against_blunt = 1.3;
 	
-
 	if(weaponCat == "Throwing")
 	{
 		ps_bonus = 0.1;
@@ -340,9 +340,8 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	}
 	
 	// Potential maximum damage swing can inflict
-	var potential_damage = penalty_mod * ( dmg * hamod * ( 1 + ps * ps_bonus ) * ( basewpfbonus + wpf / 100.0 * wpf_bonus ) + strengthbonus );
+	var potential_damage = penalty_mod * ( dmg * hamod * ( 1 + ps * ps_bonus ) * ( basewpfbonus + ewpf / 100.0 * wpf_bonus ) + strengthbonus );
 	
-
 	// Armor soak and reduction factors based on damage type
 	var soak_factor = arm;
 	var reduction_factor = arm;
@@ -369,49 +368,48 @@ function getWeaponDamage(str, ps, ha, wpf, dmg, dmgType, weaponCat, mounted, shi
 	//Randomized damage
 	var randomized_damage_max = potential_damage;
 	var randomized_damage_min = potential_damage * 0.9;
-	
-	// Damage soak
+	var randomized_damage_med = potential_damage * 0.95;
 
-	//Randomization of damage has been reduced
+	// Damage soak with 70-75% randomization from armour
 
 	var soak_min =  (0.75 * soak_factor);
 	var soak_max =  (0.7  * soak_factor);
+	var soak_med = (0.725 * soak_factor);
+
 	var soaked_damage_min = Math.max(0, randomized_damage_min - soak_min);
-	var soaked_damage_max = randomized_damage_max - soak_max;
+	var soaked_damage_max = Math.max(0, randomized_damage_max - soak_max);
+	var soaked_damage_med = Math.max(0, randomized_damage_med - soak_med);
+
 	//Damage reduction
 	
-	// Urist:
-	// "The same random armor between the half and full armor points
-	// of the armor is used."
-	
 	var reduction_max = Math.exp(0.7 * reduction_factor * 0.014);
-	var reduction_min = Math.exp(reduction_factor * 0.014);
+	var reduction_min = Math.exp(0.75 *reduction_factor * 0.014);
+	var reduction_med = Math.exp(0.725 * reduction_factor * 0.014);
+
 	var reduced_damage_min = (1.0 - 1.0 / reduction_min) * soaked_damage_min;
 	var reduced_damage_max = (1.0 - 1.0 / reduction_max) * soaked_damage_max;
+	var reduced_damage_med = (1.0 - 1.0 / reduction_med) * soaked_damage_med;
 
 	if (reduction_factor < 0.00001){
 		reduced_damage_min  = 0;
 		reduced_damage_max  = 0;
+		reduced_damage_med  = 0;
 	}
-
 
 	var damage_difference_min = reduced_damage_min + soak_min;
 	var effective_damage_min = randomized_damage_min - damage_difference_min;
 
 	var damage_difference_max = reduced_damage_max + soak_max;
 	var effective_damage_max = randomized_damage_max - damage_difference_max;
+
+	var damage_difference_med = reduced_damage_med + soak_med;
+	var effective_damage_med = randomized_damage_med - damage_difference_med;
 	
 	// Round to nearest 2nd decimal, avoiding NaN from 0
 	var min_damage = Math.max(0, Math.round(effective_damage_min * 100) / 100);
 	var max_damage = Math.max(0, Math.round(effective_damage_max * 100) / 100);
-	
-	// No negative damage (no healing ;__; )
-	if (min_damage < 0) {
-		min_damage = 0;
-	}
-	if (max_damage < 0) {
-		max_damage = 0;
-	}
-	
-	return [min_damage, max_damage];
+	var med_damage = Math.max(0, Math.round(effective_damage_med * 100) / 100);
+	var raw_damage = Math.max(0, Math.round(potential_damage * 100) / 100);
+
+	return [min_damage, max_damage, med_damage, raw_damage];
 }
